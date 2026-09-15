@@ -1,0 +1,152 @@
+# =============================================================================
+# Quantitative Research — Global Configuration
+# =============================================================================
+# This file centralises all configurable parameters so that the entire
+# research pipeline is reproducible from a single source of truth.
+# =============================================================================
+
+# --- Universe ---------------------------------------------------------------
+# We deliberately use ETFs (not individual stocks) for equities to mitigate
+# survivorship bias.  Crypto tickers use Yahoo Finance "-USD" convention.
+# Futures use Yahoo Finance continuous-contract convention ("=F").
+universe:
+  equities:
+    - ticker: "SPY"
+      name: "S&P 500 ETF"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "QQQ"
+      name: "Nasdaq 100 ETF"
+      asset_class: "equity"
+      cost_bps: 10
+
+  # Sector ETFs (for Sector Rotation — M20)
+  sectors:
+    - ticker: "XLK"
+      name: "Technology Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLF"
+      name: "Financial Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLE"
+      name: "Energy Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLV"
+      name: "Health Care Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLI"
+      name: "Industrial Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLP"
+      name: "Consumer Staples Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLY"
+      name: "Consumer Discretionary Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLU"
+      name: "Utilities Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+    - ticker: "XLB"
+      name: "Materials Select Sector"
+      asset_class: "equity"
+      cost_bps: 10
+
+  # Macro indicators (for Regime / VRP signals — M21/M23)
+  macro_indicators:
+    - ticker: "TLT"
+      name: "20+ Year Treasury Bond ETF"
+      asset_class: "equity"
+      cost_bps: 5
+    - ticker: "UUP"
+      name: "US Dollar Index ETF"
+      asset_class: "equity"
+      cost_bps: 5
+
+  crypto:
+    - ticker: "BTC-USD"
+      name: "Bitcoin"
+      asset_class: "crypto"
+      cost_bps: 15
+    - ticker: "ETH-USD"
+      name: "Ethereum"
+      asset_class: "crypto"
+      cost_bps: 15
+
+  futures:
+    - ticker: "GC=F"
+      name: "Gold Futures"
+      asset_class: "futures"
+      cost_bps: 5
+    - ticker: "CL=F"
+      name: "Crude Oil Futures"
+      asset_class: "futures"
+      cost_bps: 5
+
+# --- Data -------------------------------------------------------------------
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  # ~8.5 years of daily data.
+  # Start date chosen to include: crypto maturation, COVID crash,
+  # 2022 rate-hike regime, 2023-24 recovery.  This gives us diverse
+  # market regimes for robustness testing.
+  start_date: "2018-01-01"
+  end_date: "2026-08-31"
+  frequency: "1d"
+
+# --- Data splits ------------------------------------------------------------
+# Exact calendar boundaries.  We never randomly shuffle time-series data.
+# Ratios are approximately 60 / 20 / 20.
+splits:
+  in_sample:
+    start: "2018-01-01"
+    end: "2023-03-31"      # ~5.25 years
+  validation:
+    start: "2023-04-01"
+    end: "2025-01-31"      # ~1.8 years
+  out_of_sample:
+    start: "2025-02-01"
+    end: "2026-08-31"      # ~1.6 years  — NEVER touched until final eval
+
+# --- Backtest ---------------------------------------------------------------
+backtest:
+  initial_capital: 100_000
+  # Gross exposure ceiling (fraction of equity).  1.0 = no leverage.
+  max_gross_exposure: 1.0
+  # Frequency at which the portfolio is rebalanced.
+  rebalance_frequency: "daily"
+
+# --- Transaction costs ------------------------------------------------------
+costs:
+  # One-way cost in basis points.  Applied on each leg (buy and sell).
+  equity_bps: 10        # ~10 bps for liquid US equities / ETFs
+  crypto_bps: 15        # ~15 bps for major crypto pairs
+  futures_bps: 5        # ~5 bps for liquid futures
+  # Slippage model: "fixed" or "volume_dependent" (Milestone 4).
+  slippage_model: "fixed"
+
+# --- Risk -------------------------------------------------------------------
+risk:
+  # Maximum portfolio-level drawdown before forced de-risk.
+  max_drawdown: 0.15
+  # Per-strategy allocation cap (fraction of equity).
+  max_strategy_weight: 0.40
+
+# --- Reporting ---------------------------------------------------------------
+reporting:
+  output_dir: "reports"
+  sections:
+    - equity_curve
+    - drawdown_curve
+    - monthly_returns
+    - strategy_contribution
+    - portfolio_exposure
+    - robustness
